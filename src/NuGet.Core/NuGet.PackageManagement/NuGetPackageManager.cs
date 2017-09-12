@@ -1256,6 +1256,13 @@ namespace NuGet.PackageManagement
             return nuGetProjectActions;
         }
 
+        public async Task<IEnumerable<PackageDependencyInfo>> GetInstalledPackagesDependencyInfo(NuGetProject nuGetProject, CancellationToken token, bool includeUnresolved = false)
+        {
+            var targetFramework = nuGetProject.GetMetadata<NuGetFramework>(NuGetProjectMetadataKeys.TargetFramework);
+            var installedPackageIdentities = (await nuGetProject.GetInstalledPackagesAsync(token)).Select(pr => pr.PackageIdentity);
+            return await GetDependencyInfoFromPackagesFolder(installedPackageIdentities, targetFramework, includeUnresolved);
+        }
+
         /// <summary>
         /// Returns all installed packages in order of dependency. Packages with no dependencies come first.
         /// </summary>
@@ -1959,7 +1966,8 @@ namespace NuGet.PackageManagement
         }
 
         private async Task<IEnumerable<PackageDependencyInfo>> GetDependencyInfoFromPackagesFolder(IEnumerable<PackageIdentity> packageIdentities,
-            NuGetFramework nuGetFramework)
+            NuGetFramework nuGetFramework,
+            bool includeUnresolved = false)
         {
             try
             {
@@ -1974,6 +1982,10 @@ namespace NuGet.PackageManagement
                     if (packageDependencyInfo != null)
                     {
                         results.Add(packageDependencyInfo);
+                    }
+                    else if (includeUnresolved)
+                    {
+                        results.Add(new PackageDependencyInfo(package, null));
                     }
                 }
 
@@ -2978,7 +2990,7 @@ namespace NuGet.PackageManagement
 
             // Step-2: Check if the package directory could be deleted
             if (!(nuGetProject is INuGetIntegratedProject)
-                && !await PackageExistsInAnotherNuGetProject(nuGetProject, packageIdentity, SolutionManager, token))
+                && !await PackageExistsInAnotherNuGetProject(nuGetProject, packageIdentity, SolutionManager, token, excludeIntegrated: true))
             {
                 packageWithDirectoriesToBeDeleted.Add(packageIdentity);
             }
@@ -2995,7 +3007,7 @@ namespace NuGet.PackageManagement
         /// project <paramref name="nuGetProject" /> is also installed in any
         /// other projects in the solution.
         /// </summary>
-        public static async Task<bool> PackageExistsInAnotherNuGetProject(NuGetProject nuGetProject, PackageIdentity packageIdentity, ISolutionManager solutionManager, CancellationToken token)
+        public static async Task<bool> PackageExistsInAnotherNuGetProject(NuGetProject nuGetProject, PackageIdentity packageIdentity, ISolutionManager solutionManager, CancellationToken token, bool excludeIntegrated= false)
         {
             if (nuGetProject == null)
             {
@@ -3017,14 +3029,19 @@ namespace NuGet.PackageManagement
             var nuGetProjectName = NuGetProject.GetUniqueNameOrName(nuGetProject);
             foreach (var otherNuGetProject in (await solutionManager.GetNuGetProjectsAsync()))
             {
-                var otherNuGetProjectName = NuGetProject.GetUniqueNameOrName(otherNuGetProject);
-                if (!otherNuGetProjectName.Equals(nuGetProjectName, StringComparison.OrdinalIgnoreCase))
+                if (excludeIntegrated && otherNuGetProject is INuGetIntegratedProject)
                 {
-                    var packageExistsInAnotherNuGetProject = (await otherNuGetProject.GetInstalledPackagesAsync(token)).Any(pr => pr.PackageIdentity.Equals(packageIdentity));
-                    if (packageExistsInAnotherNuGetProject)
-                    {
-                        return true;
-                    }
+                    continue;
+                }
+                var otherNuGetProjectName = NuGetProject.GetUniqueNameOrName(otherNuGetProject);
+                if (otherNuGetProjectName.Equals(nuGetProjectName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                var packageExistsInAnotherNuGetProject = (await otherNuGetProject.GetInstalledPackagesAsync(token)).Any(pr => pr.PackageIdentity.Equals(packageIdentity));
+                if (packageExistsInAnotherNuGetProject)
+                {
+                    return true;
                 }
             }
 
