@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Packaging.Core;
 using NuGet.ProjectManagement;
+using NuGet.Protocol.Core.Types;
 
 namespace NuGet.PackageManagement.UI
 {
@@ -54,7 +55,6 @@ namespace NuGet.PackageManagement.UI
             // TODO: How should we handle a failure in uninstalling a package (unfortunately ExecuteNuGetProjectActionsAsync()
             // doesn't give us any useful information about the failure).
             await context.PackageManager.ExecuteNuGetProjectActionsAsync(nuGetProject, actions, uiService.ProjectContext, CancellationToken.None);
-
             // If there were packages we didn't uninstall because we couldn't find them, they will still be present in
             // packages.config, so we'll have to delete that file now.
             if (File.Exists(packagesConfigFullPath))
@@ -70,7 +70,7 @@ namespace NuGet.PackageManagement.UI
 
             //solutionManager.ReloadProject(nuGetProject);
             nuGetProject = await solutionManager.GetNuGetProjectAsync(uniqueName);
-            await solutionManager.UpgradeProjectToPackageReferenceAsync(nuGetProject);
+            nuGetProject = await solutionManager.UpgradeProjectToPackageReferenceAsync(nuGetProject);
 
             // Ensure we use the updated project for installing, and don't display preview or license acceptance windows.
             context.Projects = new[] { nuGetProject };
@@ -87,12 +87,30 @@ namespace NuGet.PackageManagement.UI
 
             progressData = new ProgressDialogData(Resources.NuGetUpgrade_WaitMessage, Resources.NuGetUpgrade_Progress_Installing);
             progress.Report(progressData);
-
+            var activeSources = new List<SourceRepository>();
+            PackageSourceMoniker
+                .PopulateList(context.SourceProvider)
+                .ForEach(s => activeSources.AddRange(s.SourceRepositories));
             var packagesToInstall = GetPackagesToInstall(dependencyItems, collapseDependencies).ToList();
             foreach (var packageIdentity in packagesToInstall)
             {
                 var action = UserAction.CreateInstallAction(packageIdentity.Id, packageIdentity.Version);
-                await context.UIActionEngine.PerformActionAsync(uiService, action, CancellationToken.None);
+                var resolutionContext = new ResolutionContext(
+                        uiService.DependencyBehavior,
+                        includePrelease: action.Version?.IsPrerelease ?? false,
+                        includeUnlisted: false,
+                        versionConstraints: VersionConstraints.None);
+                
+                var nuGetActions = await context.PackageManager.PreviewInstallPackageAsync(
+                        nuGetProject,
+                        new PackageIdentity(action.PackageId, action.Version),
+                        resolutionContext,
+                        uiService.ProjectContext,
+                        activeSources,
+                        null,
+                        token);
+                await context.PackageManager.ExecuteNuGetProjectActionsAsync(nuGetProject, nuGetProjectActions: nuGetActions, nuGetProjectContext: uiService.ProjectContext, token: CancellationToken.None);
+                //await context.UIActionEngine.PerformActionAsync(uiService, action, CancellationToken.None);
             }
 
             // If any packages didn't install, manually add them to project.json and let the user deal with it.
