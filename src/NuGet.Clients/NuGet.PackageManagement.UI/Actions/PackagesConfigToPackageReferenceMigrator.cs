@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Packaging.Core;
 using NuGet.ProjectManagement;
+using NuGet.ProjectManagement.Projects;
 using NuGet.Protocol.Core.Types;
 
 namespace NuGet.PackageManagement.UI
@@ -52,18 +54,25 @@ namespace NuGet.PackageManagement.UI
                 .Where(p => !notFoundPackages.Contains(p))
                 .Select(t => NuGetProjectAction.CreateUninstallProjectAction(t, nuGetProject));
 
-            // TODO: How should we handle a failure in uninstalling a package (unfortunately ExecuteNuGetProjectActionsAsync()
-            // doesn't give us any useful information about the failure).
-            await context.PackageManager.ExecuteNuGetProjectActionsAsync(nuGetProject, actions, uiService.ProjectContext, CancellationToken.None);
-            // If there were packages we didn't uninstall because we couldn't find them, they will still be present in
-            // packages.config, so we'll have to delete that file now.
-            if (File.Exists(packagesConfigFullPath))
+            try
             {
-                FileSystemUtility.DeleteFile(packagesConfigFullPath, uiService.ProjectContext);
-                msBuildNuGetProjectSystem.RemoveFile(Path.GetFileName(packagesConfigFullPath));
+                // TODO: How should we handle a failure in uninstalling a package (unfortunately ExecuteNuGetProjectActionsAsync()
+                // doesn't give us any useful information about the failure).
+                await context.PackageManager.ExecuteNuGetProjectActionsAsync(nuGetProject, actions, uiService.ProjectContext, CancellationToken.None);
             }
-            
-            
+            catch(Exception ex)
+            {
+                // log error message
+                uiService.ShowError(ex);
+                uiService.ProjectContext.Log(MessageLevel.Info,
+                    string.Format(CultureInfo.CurrentCulture, Resources.Upgrade_UninstallFailed));
+
+                // delete backup directory
+                Directory.Delete(backupPath);
+
+                return null;
+            }
+
             // Reload the project, and get a reference to the reloaded project
             var uniqueName = msBuildNuGetProjectSystem.ProjectUniqueName;
             await msBuildNuGetProject.SaveAsync(token);
@@ -92,37 +101,40 @@ namespace NuGet.PackageManagement.UI
                 .PopulateList(context.SourceProvider)
                 .ForEach(s => activeSources.AddRange(s.SourceRepositories));
             var packagesToInstall = GetPackagesToInstall(dependencyItems, collapseDependencies).ToList();
+
+            // create low level NuGet actions based on number of packages being installed
+            var lowLevelActions = new List<NuGetProjectAction>();
             foreach (var packageIdentity in packagesToInstall)
             {
-                var action = UserAction.CreateInstallAction(packageIdentity.Id, packageIdentity.Version);
-                var resolutionContext = new ResolutionContext(
-                        uiService.DependencyBehavior,
-                        includePrelease: action.Version?.IsPrerelease ?? false,
-                        includeUnlisted: false,
-                        versionConstraints: VersionConstraints.None);
-                
-                var nuGetActions = await context.PackageManager.PreviewInstallPackageAsync(
-                        nuGetProject,
-                        new PackageIdentity(action.PackageId, action.Version),
-                        resolutionContext,
-                        uiService.ProjectContext,
-                        activeSources,
-                        null,
-                        token);
-                await context.PackageManager.ExecuteNuGetProjectActionsAsync(nuGetProject, nuGetProjectActions: nuGetActions, nuGetProjectContext: uiService.ProjectContext, token: CancellationToken.None);
-                //await context.UIActionEngine.PerformActionAsync(uiService, action, CancellationToken.None);
+                lowLevelActions.Add(NuGetProjectAction.CreateInstallProjectAction(packageIdentity, activeSources.FirstOrDefault(), nuGetProject));
             }
 
-            // If any packages didn't install, manually add them to project.json and let the user deal with it.
-            var installedPackages = (await nuGetProject.GetInstalledPackagesAsync(CancellationToken.None)).Select(p => p.PackageIdentity);
-            var notInstalledPackages = packagesToInstall.Except(installedPackages).ToList();
-
-            if (ideExecutionContext != null)
+            try
             {
-                await ideExecutionContext.CollapseAllNodes(solutionManager);
-            }
+                var buildIntegratedProject = nuGetProject as BuildIntegratedNuGetProject;
+                await context.PackageManager.ExecuteBuildIntegratedProjectActionsAsync(
+                    buildIntegratedProject,
+                    lowLevelActions,
+                    uiService.ProjectContext,
+                    token);
 
-            return backupPath;
+                if (ideExecutionContext != null)
+                {
+                    await ideExecutionContext.CollapseAllNodes(solutionManager);
+                }
+
+                return backupPath;
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex);
+                uiService.ProjectContext.Log(MessageLevel.Info,
+                        string.Format(CultureInfo.CurrentCulture, Resources.Upgrade_InstallFailed, backupPath));
+                uiService.ProjectContext.Log(MessageLevel.Info,
+                    string.Format(CultureInfo.CurrentCulture, Resources.Upgrade_RevertSteps, "https://aka.ms/nugetupgraderevertv1"));
+
+                return null;
+            }
         }
 
         private static IEnumerable<PackageIdentity> GetPackagesToInstall(

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:msxsl='urn:schemas-microsoft-com:xslt'>
@@ -31,7 +31,7 @@
 
       <table>
         <tr>
-          <th class="issueCell">Included in project.json</th>
+          <th class="issueCell">Included as PackageReference</th>
         </tr>
         <xsl:for-each select="IncludedPackages/Package">
           <tr>
@@ -62,7 +62,7 @@
 
       <table>
         <tr>
-          <th class="issueCell">Excluded from project.json</th>
+          <th class="issueCell">Excluded from PackageReference</th>
         </tr>
         <xsl:for-each select="ExcludedPackages/Package">
           <tr>
@@ -285,7 +285,7 @@
 
         <div id="content">
           <h2 _locID="OverviewTitle">Overview</h2>
-          <div class="info-text">Upgrade to project.json was completed successfully. Please build and run your solution to verify that all packages are available.</div>
+          <div class="info-text">Upgrade to PackageReference was completed successfully. Please build and run your solution to verify that all packages are available.</div>
           <div class="info-text">
             Changed files are backed up here:
             <a>

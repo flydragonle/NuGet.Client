@@ -1379,7 +1379,7 @@ namespace NuGet.PackageManagement.UI {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Packages in project.json:.
+        ///   Looks up a localized string similar to Packages as PackageReference:.
         /// </summary>
         public static string Text_IncludedPackages {
             get {
@@ -1843,6 +1843,33 @@ namespace NuGet.PackageManagement.UI {
         public static string ToolTip_UpdateButton {
             get {
                 return ResourceManager.GetString("ToolTip_UpdateButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to NuGet upgrade failed to install packages as PackageReference. Changed files are backed up at {0}.
+        /// </summary>
+        public static string Upgrade_InstallFailed {
+            get {
+                return ResourceManager.GetString("Upgrade_InstallFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please follow simple instructions from {0} to go back to previous state..
+        /// </summary>
+        public static string Upgrade_RevertSteps {
+            get {
+                return ResourceManager.GetString("Upgrade_RevertSteps", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to NuGet upgrade failed to uninstall packages from packages.config so rolled back to previous state..
+        /// </summary>
+        public static string Upgrade_UninstallFailed {
+            get {
+                return ResourceManager.GetString("Upgrade_UninstallFailed", resourceCulture);
             }
         }
         

@@ -727,7 +727,7 @@ Please see https://aka.ms/troubleshoot_nuget_cache for more help.</value>
     <value>{0} contains an install.ps1 script that will not be applied after upgrading.</value>
   </data>
   <data name="Text_IncludedPackages" xml:space="preserve">
-    <value>Packages in project.json:</value>
+    <value>Packages as PackageReference:</value>
   </data>
   <data name="Text_BeforeUpgradeConsiderations" xml:space="preserve">
     <value>Things to consider before upgrading to project.json.</value>
@@ -776,5 +776,14 @@ Please see https://aka.ms/troubleshoot_nuget_cache for more help.</value>
   </data>
   <data name="Text_UpgradeNuGetProjectDescription" xml:space="preserve">
     <value>Upgrade this project from packages.config to PackageReference format.</value>
+  </data>
+  <data name="Upgrade_InstallFailed" xml:space="preserve">
+    <value>NuGet upgrade failed to install packages as PackageReference. Changed files are backed up at {0}</value>
+  </data>
+  <data name="Upgrade_RevertSteps" xml:space="preserve">
+    <value>Please follow simple instructions from {0} to go back to previous state.</value>
+  </data>
+  <data name="Upgrade_UninstallFailed" xml:space="preserve">
+    <value>NuGet upgrade failed to uninstall packages from packages.config so rolled back to previous state.</value>
   </data>
 </root>

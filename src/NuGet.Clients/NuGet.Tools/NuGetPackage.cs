@@ -540,7 +540,7 @@ namespace NuGetVSExtension
             var settings = uiController.UIContext.UserSettingsManager.GetSettings(GetProjectSettingsKey(nuGetProject));
             var collapseDependencies = settings.NuGetProjectUpgradeCollapseDependencies;
 
-            collapseDependencies = await UIActionEngine.UpgradeNuGetProjectAsync(uiController, nuGetProject,
+            collapseDependencies = await uiController.UIContext.UIActionEngine.UpgradeNuGetProjectAsync(uiController, nuGetProject,
                 collapseDependencies);
 
             settings.NuGetProjectUpgradeCollapseDependencies = collapseDependencies;

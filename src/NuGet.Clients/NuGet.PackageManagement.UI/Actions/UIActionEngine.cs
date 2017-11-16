@@ -115,7 +115,7 @@ namespace NuGet.PackageManagement.UI
                 token);
         }
 
-        public static async Task<bool> UpgradeNuGetProjectAsync(INuGetUI uiService, NuGetProject nuGetProject, bool collapseDependencies)
+        public async Task<bool> UpgradeNuGetProjectAsync(INuGetUI uiService, NuGetProject nuGetProject, bool collapseDependencies)
         {
             var context = uiService.UIContext;
             // Restore the project before proceeding
@@ -150,15 +150,20 @@ namespace NuGet.PackageManagement.UI
                     progressDialogSession.UserCancellationToken);
             }
 
-            var htmlLogFile = GenerateUpgradeReport(nuGetProject, backupPath, upgradeInformationWindowModel);
-            Process process = null;
-            try
+            if (!string.IsNullOrEmpty(backupPath))
             {
-                process = Process.Start(htmlLogFile);
-            }
-            catch { }
-            if (process == null)
-            {
+                var htmlLogFile = GenerateUpgradeReport(nuGetProject, backupPath, upgradeInformationWindowModel);
+                /*Process process = null;
+                try
+                {
+                    process = Process.Start(htmlLogFile);
+                }
+                catch { }
+                if (process == null)
+                {
+                    OpenUrlInInternalWebBrowser(htmlLogFile);
+                }*/
+
                 OpenUrlInInternalWebBrowser(htmlLogFile);
             }
 
