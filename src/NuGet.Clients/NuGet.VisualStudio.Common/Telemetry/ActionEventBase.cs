@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -8,7 +8,7 @@ namespace NuGet.VisualStudio
     /// <summary>
     /// Base class to generate telemetry data for nuget operations like install, update or restore.
     /// </summary>
-    public abstract class ActionEventBase
+    public class ActionEventBase
     {
         public ActionEventBase(
             string operationId,

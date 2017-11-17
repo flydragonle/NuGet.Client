@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 namespace NuGet.ProjectManagement
@@ -20,6 +20,7 @@ namespace NuGet.ProjectManagement
         public static readonly string NugetActionEventName = EventNamePrefix + "NugetAction";
         public static readonly string NugetActionStepsEventName = EventNamePrefix + "NugetActionSteps";
         public static readonly string RestoreActionEventName = EventNamePrefix + "RestoreInformation";
+        public static readonly string UpgradeEventName = EventNamePrefix + "UpgradeInformation";
 
         // project information event data
         public static readonly string NuGetProjectTypePropertyName = PropertyNamePrefix + "NuGetProjectType";

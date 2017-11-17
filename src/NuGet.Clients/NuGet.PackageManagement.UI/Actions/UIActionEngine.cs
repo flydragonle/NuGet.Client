@@ -153,16 +153,6 @@ namespace NuGet.PackageManagement.UI
             if (!string.IsNullOrEmpty(backupPath))
             {
                 var htmlLogFile = GenerateUpgradeReport(nuGetProject, backupPath, upgradeInformationWindowModel);
-                /*Process process = null;
-                try
-                {
-                    process = Process.Start(htmlLogFile);
-                }
-                catch { }
-                if (process == null)
-                {
-                    OpenUrlInInternalWebBrowser(htmlLogFile);
-                }*/
 
                 OpenUrlInInternalWebBrowser(htmlLogFile);
             }
