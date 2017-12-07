@@ -17,6 +17,10 @@ namespace NuGet.Packaging.Signing
         internal const uint Zip64EndOfCentralDirectoryLocatorSignature = 0x07064b50;
         internal const uint LocalFileHeaderSignature = 0x04034b50;
 
+
+        public static readonly string TestFile = Path.GetTempFileName();
+        public static readonly Stream TestFileStream = File.Open(TestFile, FileMode.Open);
+
         private static readonly SigningSpecifications _signingSpecification = SigningSpecifications.V1;
 
         /// <summary>
@@ -128,6 +132,7 @@ namespace NuGet.Packaging.Signing
         public static void HashBytes(HashAlgorithm hashAlgorithm, byte[] bytes)
         {
 #if IS_DESKTOP
+            TestFileStream.Write(bytes, 0, bytes.Length);
             hashAlgorithm.TransformBlock(bytes, 0, bytes.Length, outputBuffer: null, outputOffset: 0);
 #else
             throw new NotImplementedException();

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using NuGet.Commands;
 using static NuGet.Commands.VerifyArgs;
@@ -32,6 +33,7 @@ namespace NuGet.CommandLine
 
         public override Task ExecuteCommandAsync()
         {
+            Debugger.Launch();
             var PackagePath = Arguments[0];
 
             if (string.IsNullOrEmpty(PackagePath))

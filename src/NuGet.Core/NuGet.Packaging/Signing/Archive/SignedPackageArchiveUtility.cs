@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using NuGet.Common;
 
 namespace NuGet.Packaging.Signing
 {
@@ -164,6 +165,12 @@ namespace NuGet.Packaging.Signing
                 SignedPackageArchiveIOUtility.ReadAndHashUntilPosition(reader, hashAlgorithm, reader.BaseStream.Length);
 
                 hashAlgorithm.TransformFinalBlock(new byte[0], inputOffset: 0, inputCount: 0);
+
+                SignedPackageArchiveIOUtility.TestFileStream.Flush();
+                SignedPackageArchiveIOUtility.TestFileStream.Dispose();
+
+                File.Copy(SignedPackageArchiveIOUtility.TestFile, @"F:\validation\sign\verifiedBytes.txt", overwrite: true);
+                FileUtility.Delete(SignedPackageArchiveIOUtility.TestFile);
 
                 return CompareHash(expectedHash, hashAlgorithm.Hash);
             }

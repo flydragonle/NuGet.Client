@@ -304,7 +304,7 @@ namespace NuGet.Packaging
 #endif
         }
 
-        public override Task<byte[]> GetArchiveHashAsync(HashAlgorithmName hashAlgorithm, CancellationToken token)
+        public override async Task<byte[]> GetArchiveHashAsync(HashAlgorithmName hashAlgorithm, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
 
@@ -313,10 +313,38 @@ namespace NuGet.Packaging
                 throw new SignatureException(Strings.SignedPackageUnableToAccessSignature);
             }
 
+            byte[] transformHash;
+
+            ZipStream.Seek(offset: 0, origin: SeekOrigin.Begin);
+            using (var memoryStream = new MemoryStream())
+            {
+                var hashProvider = hashAlgorithm.GetHashProvider();
+                await ZipStream.CopyToAsync(memoryStream);
+                var bytes = new byte[] { };
+#if IS_DESKTOP
+                bytes = memoryStream.ToArray();
+
+                var file = Path.GetTempFileName();
+                ZipStream.Seek(offset: 0, origin: SeekOrigin.Begin);
+                using (var fileStream = File.Open(file, FileMode.Open))
+                {
+                    await ZipStream.CopyToAsync(fileStream);
+                    await fileStream.FlushAsync();
+                }
+
+                File.Copy(file, @"F:\validation\sign\signedBytes.txt", overwrite: true);
+                FileUtility.Delete(file);
+
+                hashProvider.TransformBlock(bytes, 0, bytes.Length, outputBuffer: null, outputOffset: 0);
+                hashProvider.TransformFinalBlock(new byte[0], inputOffset: 0, inputCount: 0);
+                transformHash = hashProvider.Hash;
+#endif
+            }
+
             ZipStream.Seek(offset: 0, origin: SeekOrigin.Begin);
             var hash = hashAlgorithm.GetHashProvider().ComputeHash(ZipStream, leaveStreamOpen: true);
 
-            return Task.FromResult(hash);
+            return hash;
         }
     }
 }

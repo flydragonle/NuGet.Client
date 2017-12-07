@@ -21,6 +21,8 @@ namespace NuGet.Commands
     {
         public async Task<int> ExecuteCommandAsync(SignArgs signArgs)
         {
+            Debugger.Launch();
+
             // resolve path into multiple packages if needed.
             var packagesToSign = LocalFolderUtility.ResolvePackageFromPath(signArgs.PackagePath);
             LocalFolderUtility.EnsurePackageFileExists(signArgs.PackagePath, packagesToSign);
