@@ -4,7 +4,17 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.3</TargetFramework>
   </PropertyGroup>
-
+  
+  <!--Used to publish packages to a blob feed-->
+  <Import Project="$(BlobPublishTargetsPath)" />
   <Import Project="$(BuildCommonDirectory)common.targets" />
+  
+  <ItemGroup>
+    <ItemsToPush Include="$(NupkgOutputDirectory)*.nupkg" />
+  </ItemGroup>
+
+  <Target Name="PublishToBlobFeed" Condition=" '$(BuildRTM)' == 'false' AND '$(BuildingInsideVisualStudio)' != 'true' AND Exists($(NupkgOutputDirectory))">
+    <PushToBlobFeed ExpectedFeedUrl="$(ExpectedFeedUrl)" AccountKey="$(AccountKey)" ItemsToPush="@(ItemsToPush)" Overwrite="$(PublishOverwrite)" />
+  </Target>
 
 </Project>
