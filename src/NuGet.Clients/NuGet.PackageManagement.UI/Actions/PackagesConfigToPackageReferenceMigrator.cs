@@ -67,7 +67,7 @@ namespace NuGet.PackageManagement.UI
 
                 try
                 {
-                    await context.PackageManager.ExecuteNuGetProjectActionsAsync(nuGetProject, actions, uiService.ProjectContext, CancellationToken.None);
+                    await context.PackageManager.ExecuteNuGetProjectActionsAsync(nuGetProject, actions, uiService.ProjectContext, NullSourceCacheContext.Instance, CancellationToken.None);
                 }
                 catch (Exception ex)
                 {
