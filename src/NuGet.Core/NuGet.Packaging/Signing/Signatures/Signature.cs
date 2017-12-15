@@ -143,13 +143,10 @@ namespace NuGet.Packaging.Signing
             {
                 if (string.Equals(attribute.Oid.Value, Oids.SignatureTimeStampTokenAttributeOid, StringComparison.Ordinal))
                 {
-                    foreach (var value in attribute.Values)
-                    {
-                        var timestampCms = new SignedCms();
-                        timestampCms.Decode(value.RawData);
+                    var timestampCms = new SignedCms();
+                    timestampCms.Decode(attribute.Values[0].RawData);
 
-                        timestampList.Add(new Timestamp(timestampCms)); ;
-                    }
+                    timestampList.Add(new Timestamp(timestampCms)); ;
                 }
             }
             return timestampList;
