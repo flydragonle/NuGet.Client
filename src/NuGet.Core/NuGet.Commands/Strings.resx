@@ -678,4 +678,7 @@ For more information, visit http://docs.nuget.org/docs/reference/command-line-re
   <data name="VerifyCommand_Failed" xml:space="preserve">
     <value>Could not verify package(s) signature.</value>
   </data>
+  <data name="Error_ProjectWithTooManyDependencies" xml:space="preserve">
+    <value>Project {0} cannot contain more than {1} package references.</value>
+  </data>
 </root>
