@@ -55,7 +55,7 @@ namespace NuGet.Commands
                     {
                         case ERROR_INVALID_PASSWORD_HRESULT:
                             throw new SignCommandException(
-                                LogMessage.CreateError(NuGetLogCode.NU3014,
+                                LogMessage.CreateError(NuGetLogCode.NU3002,
                                 string.Format(CultureInfo.CurrentCulture,
                                 Strings.SignCommandInvalidPasswordException,
                                 options.CertificatePath,

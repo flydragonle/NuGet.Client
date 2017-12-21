@@ -19,6 +19,28 @@ namespace NuGet.Packaging.Signing
     /// </summary>
     public static class SigningUtility
     {
+        public static void VerifyCertificate(X509Certificate2 certificate)
+        {
+            if (!IsSignatureAlgorithmSupported(certificate))
+            {
+                throw new SignatureException(NuGetLogCode.NU3022, Strings.SigningCertificateHasUnsupportedSignatureAlgorithm);
+            }
+
+            if (!IsCertificatePublicKeyValid(certificate))
+            {
+                throw new SignatureException(NuGetLogCode.NU3023, Strings.SigningCertificateFailsPublicKeyLengthRequirement);
+            }
+
+            if (IsCertificateValidityPeriodInTheFuture(certificate))
+            {
+                throw new SignatureException(NuGetLogCode.NU3024, Strings.SignatureNotYetValid);
+            }
+
+            if (HasExtendedKeyUsage(certificate, Oids.LifetimeSignerEkuOid))
+            {
+                throw new SignatureException(NuGetLogCode.NU3025, Strings.ErrorCertificateHasLifetimeSignerEKU);
+            }
+        }
         /// <summary>
         /// Determines if a certificate's signature algorithm is supported.
         /// </summary>
@@ -67,57 +89,11 @@ namespace NuGet.Packaging.Signing
             return SigningUtility.HasExtendedKeyUsage(certificate, Oids.LifetimeSignerEkuOid);
         }
 
-#if IS_DESKTOP
-        /// <summary>
-        /// Create a list of certificates in chain order with the leaf first and root last.
-        /// </summary>
-        public static IReadOnlyList<X509Certificate2> GetCertificateChain(
-            X509Certificate2 certificate,
-            X509Certificate2Collection extraStore)
-        {
-            if (certificate == null)
-            {
-                throw new ArgumentNullException(nameof(certificate));
-            }
-
-            if (extraStore == null)
-            {
-                throw new ArgumentNullException(nameof(extraStore));
-            }
-
-            X509ChainStatus[] chainStatusList;
-            using (var chain = new X509Chain())
-            {
-                SetCertBuildChainPolicy(
-                    chain.ChainPolicy,
-                    extraStore,
-                    DateTime.Now,
-                    NuGetVerificationCertificateType.Signature);
-
-                if (SigningUtility.BuildCertificateChain(chain, certificate, out chainStatusList))
-                {
-                    return GetCertificateChain(chain);
-                }
-            }
-
-            foreach (var chainStatus in chainStatusList)
-            {
-                if (chainStatus.Status != X509ChainStatusFlags.NoError)
-                {
-                    throw new SignatureException(string.Format(CultureInfo.CurrentCulture, Strings.ErrorInvalidCertificateChain, chainStatus.Status.ToString()));
-                }
-            }
-
-            // Should be unreachable.
-            throw new SignatureException(string.Format(CultureInfo.CurrentCulture, Strings.ErrorInvalidCertificateChainUnspecifiedReason));
-        }
-#endif
-
         /// <summary>
         /// Create an ordered list of certificates. The leaf node is returned first.
         /// </summary>
         /// <remarks>This does not check validity or trust. It returns the chain as-is.</remarks>
-        public static IReadOnlyList<X509Certificate2> GetCertificateChain(X509Chain certChain)
+        public static IReadOnlyList<X509Certificate2> CertificateChainToList(X509Chain certChain)
         {
             if (certChain == null)
             {
@@ -204,7 +180,7 @@ namespace NuGet.Packaging.Signing
 #if IS_DESKTOP
         public static CryptographicAttributeObjectCollection GetSignAttributes(
             SignPackageRequest request,
-            IReadOnlyList<X509Certificate2> chain)
+            IReadOnlyList<X509Certificate2> chainList)
         {
             var attributes = new CryptographicAttributeObjectCollection
             {
@@ -218,7 +194,7 @@ namespace NuGet.Packaging.Signing
             }
 
             // Add the full chain of certificate hashes
-            attributes.Add(AttributeUtility.GetSigningCertificateV2(chain, request.SignatureHashAlgorithm));
+            attributes.Add(AttributeUtility.GetSigningCertificateV2(chainList, request.SignatureHashAlgorithm));
 
             return attributes;
         }
@@ -227,10 +203,14 @@ namespace NuGet.Packaging.Signing
             X509ChainPolicy policy,
             X509Certificate2Collection additionalCertificates,
             DateTime verificationTime,
-            NuGetVerificationCertificateType certificateType)
+            NuGetVerificationCertificateType certificateType,
+            NuGetChainBuildingRequestType chainBuildingRequestType)
         {
             // This flags should only be set for verification scenarios, not signing
-            policy.VerificationFlags = X509VerificationFlags.IgnoreNotTimeValid | X509VerificationFlags.IgnoreCtlNotTimeValid;
+            if (chainBuildingRequestType == NuGetChainBuildingRequestType.Verification)
+            {
+                policy.VerificationFlags = X509VerificationFlags.IgnoreNotTimeValid | X509VerificationFlags.IgnoreCtlNotTimeValid;
+            }
 
             if (certificateType == NuGetVerificationCertificateType.Signature)
             {
@@ -246,7 +226,10 @@ namespace NuGet.Packaging.Signing
             policy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
             policy.RevocationMode = X509RevocationMode.Online;
 
-            policy.VerificationTime = verificationTime;
+            if (certificateType != NuGetVerificationCertificateType.Timestamp)
+            {
+                policy.VerificationTime = verificationTime;
+            }
         }
 
         public static bool IsCertificateValidityPeriodInTheFuture(X509Certificate2 certificate)
@@ -271,24 +254,74 @@ namespace NuGet.Packaging.Signing
             return buildSuccess && !IsCertificateValidityPeriodInTheFuture(certificate);
         }
 
+        internal static bool IsSigningCertificateValid(X509Certificate2 certificate, bool failIfInvalid, List<SignatureLog> issues)
+        {
+            var isValid = true;
+
+            if (!IsSignatureAlgorithmSupported(certificate))
+            {
+                issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3022, Strings.SigningCertificateHasUnsupportedSignatureAlgorithm));
+                isValid = false;
+            }
+
+            if (IsCertificateValidityPeriodInTheFuture(certificate))
+            {
+                issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3024, Strings.SignatureNotYetValid));
+                isValid = false;
+            }
+
+            if (!IsCertificatePublicKeyValid(certificate))
+            {
+                issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3023, Strings.SigningCertificateFailsPublicKeyLengthRequirement));
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
         internal static bool IsTimestampValid(Timestamp timestamp, byte[] data, bool failIfInvalid, List<SignatureLog> issues, SigningSpecifications spec)
         {
             var isValid = true;
+            var signerInfo = timestamp.SignerInfo;
+
             if (!timestamp.TstInfo.HasMessageHash(data))
             {
                 issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3053, Strings.TimestampFailureInvalidHash));
                 isValid = false;
             }
 
-            if (!spec.AllowedHashAlgorithmOids.Contains(timestamp.SignerInfo.DigestAlgorithm.Value))
+            try
+            {
+                signerInfo.CheckSignature(verifySignatureOnly: true);
+            }
+            catch (Exception e)
+            {
+                issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3050, Strings.ErrorTimestampVerificationFailed));
+                issues.Add(SignatureLog.DebugLog(e.ToString()));
+                isValid = false;
+            }
+
+            if (!IsSignatureAlgorithmSupported(signerInfo.Certificate))
+            {
+                issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3042, Strings.TimestampCertificateHasUnsupportedSignatureAlgorithm));
+                isValid = false;
+            }
+
+            if (!spec.AllowedHashAlgorithmOids.Contains(signerInfo.DigestAlgorithm.Value))
             {
                 issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3052, Strings.TimestampFailureInvalidHashAlgorithmOid));
                 isValid = false;
             }
 
-            if (IsCertificateValidityPeriodInTheFuture(timestamp.SignerInfo.Certificate))
+            if (IsCertificateValidityPeriodInTheFuture(signerInfo.Certificate))
             {
                 issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3044, Strings.TimestampNotYetValid));
+                isValid = false;
+            }
+
+            if (!IsCertificatePublicKeyValid(signerInfo.Certificate))
+            {
+                issues.Add(SignatureLog.Issue(failIfInvalid, NuGetLogCode.NU3043, Strings.TimestampCertificateFailsPublicKeyLengthRequirement));
                 isValid = false;
             }
 

@@ -188,7 +188,7 @@ namespace NuGet.Packaging {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Certificates with lifetime signer EKU are not supported..
+        ///   Looks up a localized string similar to The lifetime signer EKU is not supported..
         /// </summary>
         internal static string ErrorCertificateHasLifetimeSignerEKU {
             get {
@@ -215,7 +215,7 @@ namespace NuGet.Packaging {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Certificate chain validation failed with error: {0}.
+        ///   Looks up a localized string similar to Certificate chain validation failed with error(s): {0}.
         /// </summary>
         internal static string ErrorInvalidCertificateChain {
             get {
@@ -373,6 +373,15 @@ namespace NuGet.Packaging {
         internal static string ErrorSigningCertUntrustedRoot {
             get {
                 return ResourceManager.GetString("ErrorSigningCertUntrustedRoot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timestamp signature validation failed..
+        /// </summary>
+        internal static string ErrorTimestampVerificationFailed {
+            get {
+                return ResourceManager.GetString("ErrorTimestampVerificationFailed", resourceCulture);
             }
         }
         
@@ -782,11 +791,29 @@ namespace NuGet.Packaging {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The timestamp service&apos;s certificate chain could not be built for the following certificate: {0}.
+        ///   Looks up a localized string similar to The timestamp service&apos;s certificate chain could not be built: {0}.
         /// </summary>
         internal static string TimestampCertificateChainBuildFailure {
             get {
                 return ResourceManager.GetString("TimestampCertificateChainBuildFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The timestamp&apos;s certificate has a weak public key..
+        /// </summary>
+        internal static string TimestampCertificateFailsPublicKeyLengthRequirement {
+            get {
+                return ResourceManager.GetString("TimestampCertificateFailsPublicKeyLengthRequirement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The timestamp&apos;s certificate uses an unsupported signature algorithm..
+        /// </summary>
+        internal static string TimestampCertificateHasUnsupportedSignatureAlgorithm {
+            get {
+                return ResourceManager.GetString("TimestampCertificateHasUnsupportedSignatureAlgorithm", resourceCulture);
             }
         }
         
@@ -845,7 +872,7 @@ namespace NuGet.Packaging {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Timestamp response does not contain a matching response..
+        ///   Looks up a localized string similar to The timestamp response is invalid.  Nonces did not match..
         /// </summary>
         internal static string TimestampFailureNonceMismatch {
             get {

@@ -26,6 +26,8 @@ namespace NuGet.Commands
 
             var cert = await GetCertificateAsync(signArgs);
 
+            SigningUtility.VerifyCertificate(cert);
+
             signArgs.Logger.LogInformation(Environment.NewLine);
             signArgs.Logger.LogInformation(Strings.SignCommandDisplayCertificate);
             signArgs.Logger.LogInformation(CertificateUtility.X509Certificate2ToString(cert));
@@ -253,7 +255,7 @@ namespace NuGet.Commands
             if (matchingCertCollection.Count == 0)
             {
                 throw new SignCommandException(
-                    LogMessage.CreateError(NuGetLogCode.NU3003,
+                    LogMessage.CreateError(NuGetLogCode.NU3001,
                     Strings.SignCommandNoCertException));
             }
 

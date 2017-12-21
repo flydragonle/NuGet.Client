@@ -239,7 +239,7 @@
 2 - Uri.Https scheme</comment>
   </data>
   <data name="TimestampFailureNonceMismatch" xml:space="preserve">
-    <value>Timestamp response does not contain a matching response.</value>
+    <value>The timestamp response is invalid.  Nonces did not match.</value>
   </data>
   <data name="TimestampResponseExceptionGeneral" xml:space="preserve">
     <value>Timestamp service's response does not meet the NuGet package signature specification: '{0}'.</value>
@@ -249,12 +249,8 @@
     <value>Timestamp signature validation failed.</value>
   </data>
   <data name="TimestampCertificateChainBuildFailure" xml:space="preserve">
-    <value>The timestamp service's certificate chain could not be built for the following certificate: {0}</value>
-    <comment>0 -  X509Certificate2 details in the following format -
-Subject Name:
-SHA1 hash:
-Issued by:
-Valid from:</comment>
+    <value>The timestamp service's certificate chain could not be built: {0}</value>
+    <comment>0 -  chain status messages</comment>
   </data>
   <data name="SignedPackageUnableToAccessSignature" xml:space="preserve">
     <value>The package was not opened correctly to perform Signature operations. Please use a Stream based constructor to have access to Signature attributes of the package.</value>
@@ -329,7 +325,7 @@ Valid from:</comment>
     <value>Byte signature too big to seek in current stream position.</value>
   </data>
   <data name="ErrorInvalidCertificateChain" xml:space="preserve">
-    <value>Certificate chain validation failed with error: {0}</value>
+    <value>Certificate chain validation failed with error(s): {0}</value>
   </data>
   <data name="ErrorInvalidPublicKey" xml:space="preserve">
     <value>Could not validate signature. Certificate does not meet the public key requirements.</value>
@@ -374,7 +370,7 @@ Valid from:</comment>
     <value>Verifying signature with certificate: {0}</value>
   </data>
   <data name="ErrorCertificateHasLifetimeSignerEKU" xml:space="preserve">
-    <value>Certificates with lifetime signer EKU are not supported.</value>
+    <value>The lifetime signer EKU is not supported.</value>
   </data>
   <data name="ErrorInvalidPackageArchive" xml:space="preserve">
     <value>Invalid package archive.</value>
@@ -467,5 +463,14 @@ Valid from:</comment>
   </data>
   <data name="SignatureInvalidExternalFileAttributes" xml:space="preserve">
     <value>The package signature file entry is invalid.</value>
+  </data>
+  <data name="ErrorTimestampVerificationFailed" xml:space="preserve">
+    <value>Timestamp signature validation failed.</value>
+  </data>
+  <data name="TimestampCertificateFailsPublicKeyLengthRequirement" xml:space="preserve">
+    <value>The timestamp's certificate has a weak public key.</value>
+  </data>
+  <data name="TimestampCertificateHasUnsupportedSignatureAlgorithm" xml:space="preserve">
+    <value>The timestamp's certificate uses an unsupported signature algorithm.</value>
   </data>
 </root>

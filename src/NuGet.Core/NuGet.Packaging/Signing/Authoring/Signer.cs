@@ -85,19 +85,6 @@ namespace NuGet.Packaging.Signing
             return new SignatureContent(hashAlgorithmName, base64ZipArchiveHash);
         }
 
-        private void VerifyCertificate(X509Certificate2 certificate)
-        {
-            if (!SigningUtility.IsSignatureAlgorithmSupported(certificate))
-            {
-                throw new SignatureException(NuGetLogCode.NU3022, Strings.SigningCertificateHasUnsupportedSignatureAlgorithm);
-            }
-
-            if (!SigningUtility.IsCertificatePublicKeyValid(certificate))
-            {
-                throw new SignatureException(NuGetLogCode.NU3023, Strings.SigningCertificateFailsPublicKeyLengthRequirement);
-            }
-        }
-
 #else
         /// <summary>
         /// Add a signature to a package.

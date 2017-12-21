@@ -283,6 +283,11 @@ namespace NuGet.Common
         NU3024 = 3024,
 
         /// <summary>
+        /// Certificate has lifetime signer EKU
+        /// </summary>
+        NU3025 = 3025,
+
+        /// <summary>
         /// Primary signature verification failed
         /// </summary>
         NU3030 = 3030,
@@ -293,9 +298,19 @@ namespace NuGet.Common
         NU3040 = 3040,
 
         /// <summary>
-        /// Chain building failed for timestamp
+        /// Timestamp certificate chain building failed
         /// </summary>
         NU3041 = 3041,
+
+        /// <summary>
+        /// Timestamp signature algorithm not supported
+        /// </summary>
+        NU3042 = 3042,
+
+        /// <summary>
+        /// Timestamp certificate weak public key
+        /// </summary>
+        NU3043 = 3043,
 
         /// <summary>
         /// Timestamp certificate not yet effective
@@ -303,7 +318,7 @@ namespace NuGet.Common
         NU3044 = 3044,
 
         /// <summary>
-        /// Invalid timestamp in signature
+        /// Timestamp verification failed
         /// </summary>
         NU3050 = 3050,
 

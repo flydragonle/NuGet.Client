@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Common;
+using System.Linq;
 
 #if IS_DESKTOP
 using System.Security.Cryptography.Pkcs;
@@ -87,7 +88,7 @@ namespace NuGet.Packaging.Signing
                 exceptionBuilder.AppendLine(Strings.SignFailureCertificateInvalidProviderType);
                 exceptionBuilder.AppendLine(CertificateUtility.X509Certificate2ToString(request.Certificate));
 
-                throw new SignatureException(NuGetLogCode.NU3013, exceptionBuilder.ToString());
+                throw new SignatureException(NuGetLogCode.NU3001, exceptionBuilder.ToString());
             }
 
             return Signature.Load(cms);
@@ -109,18 +110,43 @@ namespace NuGet.Packaging.Signing
                 signer = new CmsSigner(SubjectIdentifierType.SubjectKeyIdentifier, request.Certificate);
             }
 
-            var chain = SigningUtility.GetCertificateChain(request.Certificate, request.AdditionalCertificates);
-
-            foreach (var certificate in chain)
+            using (var chain = new X509Chain())
             {
-                signer.Certificates.Add(certificate);
-            }
+                SigningUtility.SetCertBuildChainPolicy(
+                    chain.ChainPolicy,
+                    request.AdditionalCertificates,
+                    DateTime.Now,
+                    NuGetVerificationCertificateType.Signature,
+                    NuGetChainBuildingRequestType.Signing);
 
-            var attributes = SigningUtility.GetSignAttributes(request, chain);
+                if (SigningUtility.BuildCertificateChain(chain, request.Certificate, out var chainStatusList))
+                {
+                    var chainList = SigningUtility.CertificateChainToList(chain);
 
-            foreach (var attribute in attributes)
-            {
-                signer.SignedAttributes.Add(attribute);
+                    foreach (var certificate in chainList)
+                    {
+                        signer.Certificates.Add(certificate);
+                    }
+
+                    var attributes = SigningUtility.GetSignAttributes(request, chainList);
+
+                    foreach (var attribute in attributes)
+                    {
+                        signer.SignedAttributes.Add(attribute);
+                    }
+                }
+                else
+                {
+                    var messages = chainStatusList
+                        .ToList()
+                        .Select(x => x.StatusInformation?.Trim())
+                        .Where(x => !string.IsNullOrEmpty(x))
+                        .Distinct()
+                        .OrderBy(x => x)
+                        .ToList();
+
+                    throw new SignatureException(NuGetLogCode.NU3021, string.Format(CultureInfo.CurrentCulture, Strings.ErrorInvalidCertificateChain, string.Join(", ", messages)));
+                }
             }
 
             // We built the chain ourselves and added certificates.
