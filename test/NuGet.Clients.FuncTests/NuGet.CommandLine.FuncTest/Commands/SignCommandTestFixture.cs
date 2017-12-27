@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using NuGet.CommandLine.Test;
 using NuGet.Packaging.Signing;
-using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.X509;
 using Test.Utility.Signing;
 
 namespace NuGet.CommandLine.FuncTest.Commands

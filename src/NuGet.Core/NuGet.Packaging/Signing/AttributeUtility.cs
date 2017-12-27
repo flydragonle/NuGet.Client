@@ -3,11 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using NuGet.Common;
 using NuGet.Packaging.Signing.DerEncoding;
 using System.Globalization;
@@ -349,7 +347,7 @@ namespace NuGet.Packaging.Signing
         }
 
         // Attribute -> Hashes
-        private static List<KeyValuePair<Common.HashAlgorithmName, byte[]>> GetESSCertIDv2Entries(CryptographicAttributeObject attribute)
+        internal static List<KeyValuePair<Common.HashAlgorithmName, byte[]>> GetESSCertIDv2Entries(CryptographicAttributeObject attribute)
         {
             var entries = new List<KeyValuePair<Common.HashAlgorithmName, byte[]>>();
             var reader = attribute.ToDerSequenceReader();
@@ -371,7 +369,7 @@ namespace NuGet.Packaging.Signing
             return new KeyValuePair<Common.HashAlgorithmName, byte[]>(hashAlgorithm, attributeHashValue);
         }
 
-                /// <summary>
+        /// <summary>
         /// Attribute -> SignatureType values with no validation.
         /// </summary>
         private static List<SignatureType> GetCommitmentTypeIndicationRawValues(CryptographicAttributeObject attribute)

@@ -26,6 +26,11 @@ namespace NuGet.Packaging.Signing
         {
         }
 
+        public TimestampException(NuGetLogCode code, string message, Exception innerException)
+            : base(code, message, innerException)
+        {
+        }
+
         public TimestampException(string message)
             : this(NuGetLogCode.NU3000, message)
         {
